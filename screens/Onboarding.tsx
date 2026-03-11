@@ -3,7 +3,7 @@ import Header from '../components/Header';
 import { useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-export default function Onboarding({ navigation, onComplete }: any) {
+export default function Onboarding({ navigation }: any) {
     const [firstName, setFirstName] = useState("");
     const [email, setEmail] = useState("");
 
@@ -17,7 +17,9 @@ export default function Onboarding({ navigation, onComplete }: any) {
 
     const handleNext = async () => {
         await AsyncStorage.setItem('onboardingCompleted', '1');
-        onComplete();
+        await AsyncStorage.setItem('firstName', firstName.trim());
+        await AsyncStorage.setItem('email', email.trim());
+        navigation.reset({ index: 0, routes: [{ name: 'Home' }] });
     };
 
 
