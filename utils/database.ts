@@ -53,3 +53,38 @@ export async function fetchMenuFromAPI(): Promise<MenuItem[]> {
 export function getImageUrl(imageFileName: string): string {
     return `${IMAGE_BASE}${imageFileName}?raw=true`;
 }
+
+export async function filterMenuItems(
+    categories: string[],
+    query: string
+): Promise<MenuItem[]> {
+    if (!db) throw new Error('Database not initialized');
+
+    const hasCategories = categories.length > 0;
+    const hasQuery = query.trim().length > 0;
+
+    if (!hasCategories && !hasQuery) {
+        return await db.getAllAsync<MenuItem>('SELECT * FROM menu;');
+    }
+
+    if (hasCategories && !hasQuery) {
+        const placeholders = categories.map(() => '?').join(', ');
+        return await db.getAllAsync<MenuItem>(
+            `SELECT * FROM menu WHERE category IN (${placeholders});`,
+            categories
+        );
+    }
+
+    if (!hasCategories && hasQuery) {
+        return await db.getAllAsync<MenuItem>(
+            'SELECT * FROM menu WHERE name LIKE ?;',
+            [`%${query.trim()}%`]
+        );
+    }
+
+    const placeholders = categories.map(() => '?').join(', ');
+    return await db.getAllAsync<MenuItem>(
+        `SELECT * FROM menu WHERE category IN (${placeholders}) AND name LIKE ?;`,
+        [...categories, `%${query.trim()}%`]
+    );
+}

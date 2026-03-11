@@ -11,7 +11,7 @@ A React Native mobile application built with Expo and TypeScript for the Little 
 | [NativeWind](https://www.nativewind.dev) v4 | Tailwind CSS styling |
 | [React Navigation](https://reactnavigation.org) v7 | Stack navigation |
 | [AsyncStorage](https://react-native-async-storage.github.io/async-storage/) | Persistent key-value storage |
-| [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) | Local SQLite database for menu cache |
+| [expo-sqlite](https://docs.expo.dev/versions/latest/sdk/sqlite/) | Local SQLite database for offline menu cache |
 | [expo-image-picker](https://docs.expo.dev/versions/latest/sdk/imagepicker/) | Profile avatar selection |
 | [react-native-mask-text](https://github.com/akinncar/react-native-mask-text) | Phone number masking |
 
@@ -19,12 +19,12 @@ A React Native mobile application built with Expo and TypeScript for the Little 
 
 ```
 little-lemon-mobile/
-├── App.tsx                  # Entry point — navigation setup
+├── App.tsx                  # Entry point — Stack navigator setup
 ├── global.css               # NativeWind global styles
 │
 ├── screens/
 │   ├── Onboarding.tsx       # Registration screen (first launch)
-│   ├── Home.tsx             # Landing screen with menu list
+│   ├── Home.tsx             # Landing screen — menu list + filtering
 │   └── Profile.tsx          # User profile & settings
 │
 ├── components/
@@ -32,7 +32,7 @@ little-lemon-mobile/
 │   └── SplashScreen.tsx     # Loading screen on startup
 │
 └── utils/
-    └── database.ts          # SQLite helpers (init, get, save, fetch)
+    └── database.ts          # SQLite helpers (init, get, save, fetch, filter)
 ```
 
 ## Navigation Architecture
@@ -47,16 +47,7 @@ Stack Navigator (all screens always registered)
 App start: reads AsyncStorage → initialRouteName = Home | Onboarding
 ```
 
-All auth transitions use `navigation.reset()` so there is no back button into a previous auth state.
-
 ## Getting Started
-
-### Prerequisites
-
-- Node.js
-- Expo Go app on your device, or an iOS/Android simulator
-
-### Installation
 
 ```bash
 npm install
@@ -67,24 +58,26 @@ npx expo start
 
 ### Onboarding Screen
 - First name (letters only) + email validation
-- **Next** button disabled until both fields are valid
-- Saves user data and auth flag to AsyncStorage on submit
+- **Next** disabled until both inputs are valid
+- Saves user data and auth flag to AsyncStorage
 
 ### Home Screen
 - Header with logo and profile avatar (tap → Profile)
-- Hero banner with restaurant info
-- Menu list fetched from remote API and cached in a local **SQLite** database
-  - First launch → fetches from API, stores in SQLite
-  - Subsequent launches → loads from SQLite (works offline)
+- Hero banner with restaurant info and embedded search bar
+- Horizontal scrollable category filter (Starters / Mains / Desserts)
+  - Multi-select: multiple categories can be active at once
+  - Selected category highlighted with green background
+- Menu loaded from **SQLite** (fetched from API on first launch, cached for offline use)
+- **500ms debounced** text search filtered against dish names
+- Category + text filters combined with **AND** logic via SQL
 
 ### Profile Screen
 - Auto-populated with Onboarding data (first name, email)
-- Avatar picker via device photo library; initials placeholder when no image
-- Phone number input with `(999) 999-9999` USA mask
-- Email notification checkboxes (cosmetic)
-- **Save changes** → persists all fields to AsyncStorage
-- **Discard changes** → reverts to last saved state
-- **Log out** → clears all stored data, returns to Onboarding
+- Avatar picker with initials placeholder
+- Phone number with `(999) 999-9999` USA mask
+- Email notification checkboxes
+- **Save / Discard changes** with AsyncStorage persistence
+- **Log out** → clears all data, returns to Onboarding
 
 ## Color Palette
 
